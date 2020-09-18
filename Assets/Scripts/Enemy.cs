@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -7,11 +8,14 @@ public class Enemy : MonoBehaviour
     [SerializeField]
     private float _speed = 4.0f;
 
+    private Player _player;
+
     void Start()
     {
+        Debug.Log("Spawned Enemy");
         float x = Random.Range(-8f, 8f);
-        float y = Random.Range(-3.8f, 3.8f);
-        transform.position = new Vector3(x, y, 0);    
+        transform.position = new Vector3(x, 7f, 0);
+        _player = GameObject.Find("Player").GetComponent<Player>();
     }
 
     void Update()
@@ -27,21 +31,19 @@ public class Enemy : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.tag == "Player")
+        Debug.Log("Enemy collided with: " + other.tag);
+        if (other.CompareTag("Player"))
         {
-            Player player = other.transform.GetComponent<Player>();
-            if (player != null)
-            {
-                player.Damage();
-            }
-
+            _player.Damage();
             Destroy(this.gameObject);
         }
         
-        if (other.tag == "Laser")
+        if (other.CompareTag("Laser"))
         {
             Destroy(other.gameObject);
+            _player.AddScore(10);
             Destroy(this.gameObject);
         }
     }
+
 }

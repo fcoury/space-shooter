@@ -26,14 +26,25 @@ public class Player : MonoBehaviour
     private bool _tripleshotActive = true;
 
     [SerializeField]
-    private bool _speedupActive = true;
+    private bool _speedupActive = false;
+
+    [SerializeField]
+    private bool _shieldActive = false;
+
+    [SerializeField]
+    private GameObject _shield;
+
+    [SerializeField]
+    private int _score;
 
     private float _nextFire = 0.0f;
     private SpawnManager _spawnManager;
+    private UIManager _uiManager;
 
     void Start()
     {
         _spawnManager = GameObject.Find("SpawnManager").GetComponent<SpawnManager>();
+        _uiManager = GameObject.Find("Canvas").GetComponent<UIManager>();
         transform.position = new Vector3(0, 0, 0);
     }
 
@@ -62,6 +73,12 @@ public class Player : MonoBehaviour
         }
     }
 
+    public void AddScore(int points)
+    {
+        this._score += points;
+        _uiManager.UpdateScore(this._score);
+    }
+
     public void ActivateTripleshot()
     {
         this._tripleshotActive = true;
@@ -74,6 +91,13 @@ public class Player : MonoBehaviour
         StartCoroutine(DrainSpeedupRoutine());
     }
 
+    public void ActivateShield()
+    {
+        this._shieldActive = true;
+        this._shield.SetActive(true);
+        StartCoroutine(DrainShieldRoutine());
+    }
+
     public void DeactivateTripleshot()
     {
         this._tripleshotActive = false;
@@ -82,6 +106,12 @@ public class Player : MonoBehaviour
     public void DeactivateSpeedup()
     {
         this._speedupActive = false;
+    }
+
+    public void DeactivateShield()
+    {
+        this._shield.SetActive(false);
+        this._shieldActive = false;
     }
 
     IEnumerator DrainTripleshotRoutine()
@@ -96,17 +126,29 @@ public class Player : MonoBehaviour
         DeactivateSpeedup();
     }
 
+    IEnumerator DrainShieldRoutine()
+    {
+        yield return new WaitForSeconds(5f);
+        DeactivateSpeedup();
+    }
+
     public void Damage()
     {
+        if (this._shieldActive)
+        {
+            this.DeactivateShield();
+            return;
+        }
+
         _lives--;
+        Debug.Log("Damage - Lives: " + _lives);
+        if (_lives < 0) _lives = 0;
+        _uiManager.UpdateLives(_lives);
 
         if (_lives < 1)
         {
             Destroy(this.gameObject);
-            if (_spawnManager != null)
-            {
-                _spawnManager.OnPlayerDeath();
-            }
+            _spawnManager.OnPlayerDeath();
         }
     }
 
